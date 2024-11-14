@@ -18,11 +18,16 @@ resource "openstack_compute_instance_v2" "access" {
   user_data = file("../../scripts/gen/target/super_script_access.sh")
 }
 
-resource "openstack_networking_floatingip_v2" "fip_1" {
-  pool = "external-10-192"
+## get already allocated floating IP
+data "openstack_networking_floatingip_v2" "access_ip" {
+  address = var.access_ip
 }
 
-resource "openstack_compute_floatingip_associate_v2" "fip_1" {
-  floating_ip = openstack_networking_floatingip_v2.fip_1.address
-  instance_id = openstack_compute_instance_v2.access.id
+data "openstack_networking_port_v2" "access_port" {
+  fixed_ip = openstack_compute_instance_v2.access.access_ip_v4
+}
+
+resource "openstack_networking_floatingip_associate_v2" "access_ip_assoc" {
+  floating_ip = var.access_ip
+  port_id     = data.openstack_networking_port_v2.access_port.id
 }
